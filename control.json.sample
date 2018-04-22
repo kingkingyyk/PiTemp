@@ -1,0 +1,5 @@
+{
+  "target-temperature": 36.0,
+  "relaxation": 2.0,
+  "duration": 60
+}
