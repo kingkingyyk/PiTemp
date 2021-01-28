@@ -1,0 +1,162 @@
+<html>
+
+<head>
+    <title>PiTemp</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+</head>
+
+<body>
+    <h1>PiTemp</h1>
+
+    <div>
+        <label for="entity1">Entity 1</label>
+        <select name="entity1" id="entity1">
+            {% for entity in entities %}
+            <option value="{{ entity }}">{{ entity }}</option>
+            {% endfor %}
+            <option value="">None</option>
+        </select>
+
+        <label for="entity2">Entity 2</label>
+        <select name="entity2" id="entity2">
+            <option value="">None</option>
+            {% for entity in entities %}
+            <option value="{{ entity }}">{{ entity }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="timeframe">Timeframe</label>
+        <select name="timeframe" id="timeframe">
+            <option value="15">Last 15 mins</option>
+            <option value="60">Last hour</option>
+            <option value="180">Last 3 hours</option>
+            <option value="720">Last 12 hours</option>
+            <option value="1440">Yesterday</option>
+            <option value="20160">Last week</option>
+        </select>
+
+        <input type="checkbox" id="auto-refresh" name="refresh" checked>
+        <label for="auto-refresh">Auto refresh</label><br>
+    </div>
+
+    <div id="chart" style="margin-top: 30px; width: 100%">
+    </div>
+
+    <script>
+        function constructChart(result) {
+            const keys = Object.keys(result);
+
+            let yAxis = [];
+            let counter = 0;
+            for (let key of keys) {
+                let y = {
+                    title: {
+                        text: key,
+                        align: 'high'
+                    },
+                    lables: {
+                        overflow: 'justify'
+                    },
+                    opposite: counter == 1,
+                    min: null
+                }
+                yAxis.push(y);
+                counter += 1;
+            };
+
+            let series = [];
+            counter = 0;
+            for (let key of keys) {
+                let s = {
+                    name: key,
+                    type: 'area',
+                    yAxis: counter,
+                    data: result[key].map(x => [x.timestamp, x.value]),
+                    plotOptions: {
+                        column: {
+                            opacity: 0.5
+                        }
+                    }
+                }
+                series.push(s);
+                counter++;
+            }
+
+            Highcharts.chart('chart', {
+                chart: {
+                    zoomType: 'xy'
+                },
+                title: {
+                    text: 'History'
+                },
+                xAxis: {
+                    type: 'datetime',
+                    title: {
+                        text: 'Time'
+                    }
+                },
+                yAxis: yAxis,
+                plotOptions: {
+                    bar: {
+                        dataLabels: {
+                            enabled: true
+                        }
+                    }
+                },
+                legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'top',
+                    x: -40,
+                    y: 80,
+                    floating: true,
+                    borderWidth: 1,
+                    backgroundColor:
+                        Highcharts.defaultOptions.legend.backgroundColor || '#FFFFFF',
+                    shadow: true
+                },
+                credits: {
+                    enabled: false
+                },
+                series: series,
+            });
+        }
+
+
+        function loadChart() {
+            $.ajax({
+                url: "values",
+                data: {
+                    entity1: $("#entity1").val(),
+                    entity2: $("#entity2").val(),
+                    timeframe: $("#timeframe").val()
+                },
+                success: function (result) {
+                    constructChart(result);
+                },
+                error: function () {
+                    console.log('Error requesting data!');
+                }
+            })
+        }
+        loadChart();
+
+        setInterval(() => {
+            if ($("#auto-refresh").is(":checked")) loadChart();
+        }, 60*1000);
+
+        $("#entity1").on('change', () => loadChart());
+        $("#entity2").on('change', () => loadChart());
+        $("#timeframe").on('change', () => loadChart());
+    </script>
+
+    <hr class="solid">
+
+    <footer style="text-align: center; width: 100%">
+        <p><a href="https://github.com/kingkingyyk/PiTemp">GitHub</a></p>
+        <p>Devices Used : Raspberry Pi Zero W, I2C 1602 LCD, Grove Relay, DHT22</p>
+    </footer>
+</body>
+
+</html>

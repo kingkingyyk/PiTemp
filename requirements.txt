@@ -1,0 +1,6 @@
+gevent
+Adafruit_DHT
+flask
+requests
+RPi.GPIO
+Flask-SQLAlchemy
