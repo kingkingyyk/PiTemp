@@ -4,6 +4,8 @@
     <title>PiTemp</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.32/moment-timezone-with-data.min.js"></script>
 </head>
 
 <body>
@@ -72,7 +74,7 @@
                     name: key,
                     type: 'area',
                     yAxis: counter,
-                    data: result[key].map(x => [x.timestamp, x.value]),
+                    data: result[key].map(x => [moment(x.timestamp).toDate().valueOf(), Math.round(x.value*10) / 10]),
                     plotOptions: {
                         column: {
                             opacity: 0.5
@@ -83,9 +85,18 @@
                 counter++;
             }
 
+            Highcharts.setOptions({
+                time: {
+                    useUTC: false,
+                    timezone: 'Asia/Kuala_Lumpur',
+                    timezoneOffset: new Date().getTimezoneOffset()
+                }
+            });
+
             Highcharts.chart('chart', {
                 chart: {
-                    zoomType: 'xy'
+                    zoomType: 'xy',
+                    marginRight: 180
                 },
                 title: {
                     text: 'History'

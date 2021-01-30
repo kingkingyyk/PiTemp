@@ -53,6 +53,23 @@ def read_and_store_values():
             db.session.commit()
         time.sleep(60.0)
 
+def truncate_values(values):
+    result = []
+    if values:
+        result.append(values[0])
+    for i in range(1, len(values)-1):
+        prev_v = values[i-1]['value']
+        curr_v = values[i]['value']
+        next_v = values[i+1]['value']
+
+        insert = not prev_v < curr_v < next_v and not prev_v > curr_v > next_v and not prev_v == curr_v == next_v
+        
+        if insert:
+            result.append(values[i])
+
+    if len(values) > 1:
+        result.append(values[-1])
+    return result
 
 @app.route('/values')
 def return_values():
@@ -65,11 +82,13 @@ def return_values():
 
     ret_values = {}
     if entity1:
-        ret_values[entity1] = [{'timestamp': x.timestamp.isoformat()+'Z', 'value': x.value}
+        values = [{'timestamp': x.timestamp.isoformat()+'Z', 'value': x.value}
                   for x in Record.query.filter(and_(Record.entity == entity1, Record.timestamp >= since)).all()]
+        ret_values[entity1] = truncate_values(values)
     if entity2:
-        ret_values[entity2] = [{'timestamp': x.timestamp.isoformat()+'Z', 'value': x.value}
+        values = [{'timestamp': x.timestamp.isoformat()+'Z', 'value': x.value}
                   for x in Record.query.filter(and_(Record.entity == entity2, Record.timestamp >= since)).all()]
+        ret_values[entity2] = truncate_values(values)
     return ret_values
 
 
